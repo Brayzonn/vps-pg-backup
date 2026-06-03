@@ -182,7 +182,7 @@ You should see `backup OK` in the output. Confirm the file appears in your bucke
 ### 7. Schedule with cron
 
 ```bash
-crontab -e
+sudo crontab -e
 ```
 
 Add this line (runs daily at 03:00):
