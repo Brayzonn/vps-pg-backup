@@ -174,7 +174,7 @@ ssh user@your-vps 'sudo mv /tmp/pg-backup /usr/local/bin/ && sudo chmod +x /usr/
 ### 6. Test manually
 
 ```bash
-set -a; . /etc/your-app-backup.env; set +a; pg-backup
+sudo bash -c 'set -a; . /etc/your-app-backup.env; set +a; pg-backup'
 ```
 
 You should see `backup OK` in the output. Confirm the file appears in your bucket and the healthchecks.io check turns green.
