@@ -257,4 +257,4 @@ A full walkthrough of how this works — including the monitoring setup and rete
 
 ## License
 
-MIT
+[MIT](./LICENSE) © 2026 Eyinda Bright
