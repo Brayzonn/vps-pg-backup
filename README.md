@@ -209,19 +209,65 @@ Set up a free check at [healthchecks.io](https://healthchecks.io): Period = 1 da
 
 ## Restore
 
+Both Cloudflare R2 and Backblaze B2 are S3-compatible, so the AWS CLI works with either one. Install it once and use it for all downloads.
+
+### 1. Install the AWS CLI
+
+**macOS**
+
+```bash
+brew install awscli
+```
+
+**Ubuntu/Debian**
+
+```bash
+# Install dependencies:
+sudo apt install -y unzip curl
+
+# Download and install:
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+```
+
+Verify:
+
+```bash
+aws --version
+```
+
+### 2. Configure it for your provider
+
+The AWS CLI needs your credentials and endpoint. Run this once:
+
+**Cloudflare R2/Backblaze B2**
+
+```bash
+sudo -E bash -c 'set -a && source /etc/your-app-backup.env && aws configure set aws_access_key_id $S3_ACCESS_KEY && aws configure set aws_secret_access_key $S3_SECRET_KEY'
+```
+
+### 3. Download a backup
+
+```bash
+# List available backups:
+sudo -E bash -c 'set -a && source /etc/your-app-backup.env && aws --endpoint-url $S3_ENDPOINT s3 ls s3://$S3_BUCKET/daily/'
+
+# Download the one you want:
+sudo -E bash -c 'set -a && source /etc/your-app-backup.env && aws --endpoint-url $S3_ENDPOINT s3 cp s3://$S3_BUCKET/daily/your-app_2026-05-25_030000.sql.gz /tmp/'
+```
+
+Replace the filename with the actual backup you want to restore.
+
 ### Testing a backup (restore drill)
 
-Run this monthly to confirm your backups are actually usable.
-
-Go to your Cloudflare R2 (or Backblaze B2) dashboard, open your bucket, navigate to the `daily/` folder, and download the most recent `.sql.gz` file. Copy it to your VPS at `/tmp/`.
-
-Then spin up a throwaway Postgres container and restore into it:
+Run this monthly to confirm your backups are actually usable. After downloading the file to `/tmp/`, spin up a throwaway Postgres container and restore into it:
 
 ```bash
 # Spin up a throwaway Postgres container:
 docker run --name pg-test -e POSTGRES_PASSWORD=test -d postgres:16
 
-#restore into it
+# Restore into it:
 gunzip -c /tmp/your-app_2026-05-25_030000.sql.gz \
   | docker exec -i pg-test psql -U postgres
 
@@ -234,7 +280,7 @@ docker rm -f pg-test
 
 ### Actual disaster recovery
 
-If your VPS is gone and you need to fully restore into production, download the backup file from your R2 or B2 dashboard first, copy it to your new VPS, then stop your app so nothing writes mid-restore:
+If your VPS is gone and you need to fully restore into production, download the backup file first using the steps above, copy it to your new VPS, then stop your app so nothing writes mid-restore:
 
 ```bash
 docker compose stop api
