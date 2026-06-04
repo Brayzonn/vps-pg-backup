@@ -211,17 +211,17 @@ Set up a free check at [healthchecks.io](https://healthchecks.io): Period = 1 da
 
 ### Testing a backup (restore drill)
 
-Run this monthly against a throwaway container
+Run this monthly to confirm your backups are actually usable.
+
+Go to your Cloudflare R2 (or Backblaze B2) dashboard, open your bucket, navigate to the `daily/` folder, and download the most recent `.sql.gz` file. Copy it to your VPS at `/tmp/`.
+
+Then spin up a throwaway Postgres container and restore into it:
 
 ```bash
-# Download the backup:
-aws --endpoint-url "$S3_ENDPOINT" s3 cp \
-  s3://your-app-db-backups/daily/your-app_2026-05-25_030000.sql.gz /tmp/
-
 # Spin up a throwaway Postgres container:
 docker run --name pg-test -e POSTGRES_PASSWORD=test -d postgres:16
 
-# Restore into it:
+#restore into it
 gunzip -c /tmp/your-app_2026-05-25_030000.sql.gz \
   | docker exec -i pg-test psql -U postgres
 
@@ -234,7 +234,7 @@ docker rm -f pg-test
 
 ### Actual disaster recovery
 
-If your VPS is gone and you need to fully restore into production, stop your app first so nothing writes mid-restore:
+If your VPS is gone and you need to fully restore into production, download the backup file from your R2 or B2 dashboard first, copy it to your new VPS, then stop your app so nothing writes mid-restore:
 
 ```bash
 docker compose stop api
@@ -251,7 +251,7 @@ docker compose start api
 
 ## Read more
 
-A full walkthrough of how this works — including the monitoring setup and retention strategy — is on [my blog](https://zoneyhub.com/blog/automating-postgresql-backups-with-cloudflare-r2).
+A full walkthrough of how this works, including the monitoring setup and retention strategy is on [my blog](https://zoneyhub.com/blog/automating-postgresql-backups-with-cloudflare-r2).
 
 ---
 
